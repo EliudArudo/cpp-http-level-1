@@ -7,13 +7,8 @@
  *  ** Issues to fix
  *    - POST without any data is not handled
  *    - 404 Handler is called for unsupported methods, but no JSON is sent back
- *  -- Get params from GET requests 
- * 
- *  webserver.cpp Refactor the JSON EXTRACTION CLASS to a new one
- *  -- Could make it a class so that we can do more with is, such as outputting JSON object -- I'm convinced
  *  
  *---------------- 
-
  */
 
 // nlohmann/json

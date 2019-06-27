@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 
 #include "../webserver/webserver.h"
 #include "../socket/src/Socket.h"
@@ -7,30 +8,56 @@
 #include "../services/data/data.h"
 
 #include "controllers.h"
+#include "../services/store/store.h"
 
 using nlohmann::json; // Important for sending back JSON
 
-void Controller::Request_Handler(webserver::http_request *r)
+/// Logger
+void Logger(webserver::http_request *r, std::map<std::string, std::string> json_map_response)
 {
-    Socket s = *(r->s_);
 
-    // Logging json body data and params sent along
-    std::string params = DataService::mapToString(r->params_);
+    /*  What we're logging
+    *  - Route
+    *  - Method
+    *  - Params
+    *  - Body data
+    *  - Expected response 
+    */
 
-    if (params.length() > 2) // Covering the default "{}"
+    using namespace std; // Make our lives simpler from std::cout and std::endl
+
+    cout
+        << "----------------------------------------------" << endl;
+    cout << "Route: " << r->path_ << endl;
+    cout << "Method: " << r->method_ << endl;
+
+    string params = DataService::mapToString(r->params_);
+
+    if (params.length() > 2)
     {
-        std::cout << "Params on " << r->method_ << " request to '" << r->path_ << "' path :" << std::endl;
-        std::cout << params << std::endl;
+        cout << "Route params: " << endl;
+        cout << params << endl;
     }
 
     if (r->raw_body_data_.length() > 0)
     {
-        // Parsing string to a JSON object
-        auto extracted_json = json::parse(r->raw_body_data_); // create JSON object from string literal
+        cout << "Body data: " << endl;
 
-        std::cout << "Data sent along with the " << r->method_ << " request to '" << r->path_ << "' path :" << std::endl;
-        std::cout << extracted_json.dump(4) << std::endl;
+        auto extracted_json = json::parse(r->raw_body_data_);
+        cout << extracted_json.dump(4) << endl;
     }
+
+    cout << "What we're about to send out: " << endl;
+    cout << DataService::mapToString(json_map_response) << endl;
+
+    cout
+        << "----------------------------------------------" << endl;
+}
+/// Logger
+
+void Controller::Request_Handler(webserver::http_request *r)
+{
+    Socket s = *(r->s_);
 
     // Mapping Request methods to repective handlers
     if (r->method_ == "POST")
@@ -43,91 +70,85 @@ void Controller::Request_Handler(webserver::http_request *r)
         Handle_404(r);
 };
 
-void Controller::POST_handler(webserver::http_request *r)
-{
-
-    std::cout << "POST Handler called" << std::endl;
-
-    Socket s = *(r->s_);
-
-    std::string json_response;
-    std::map<std::string, std::string> json_map_response;
-
-    if (r->path_ == "/")
-    {
-        json_map_response = {{"path", "index"}, {"route", "/"}};
-    }
-    else if (r->path_ == "/red")
-    {
-        json_map_response = {{"path", "red-page"}, {"route", "/red"}};
-    }
-    else if (r->path_ == "/blue")
-    {
-        json_map_response = {{"path", "blue-page"}, {"route", "/blue"}};
-    }
-    else if (r->path_ == "/form")
-    {
-        // title = "Fill a form";
-
-        // body = "<h1>Fill a form</h1>";
-        // body += "<form action='/form'>"
-        //         "<table>"
-        //         "<tr><td>Field 1</td><td><input name=field_1></td></tr>"
-        //         "<tr><td>Field 2</td><td><input name=field_2></td></tr>"
-        //         "<tr><td>Field 3</td><td><input name=field_3></td></tr>"
-        //         "</table>"
-        //         "<input type=submit></form>";
-
-        // for (std::map<std::string, std::string>::const_iterator i = r->params_.begin();
-        //      i != r->params_.end();
-        //      i++)
-        // {
-
-        //     body += "<br>" + i->first + " = " + i->second;
-        // }
-
-        // body += "<hr>" + links;
-
-        json_map_response = {{"path", "form-page"}, {"route", "/form"}};
-    }
-    else if (r->path_ == "/auth")
-    {
-        // if (r->authentication_given_)
-        // {
-        //     if (r->username_ == "rene" && r->password_ == "secretGarden")
-        //     {
-        //         body = "<h1>Successfully authenticated</h1>" + links;
-        //     }
-        //     else
-        //     {
-        //         body = "<h1>Wrong username or password</h1>" + links;
-        //         r->auth_realm_ = "Private Stuff";
-        //     }
-        // }
-        // else
-        // {
-        //     r->auth_realm_ = "Private Stuff";
-        // }
-
-        json_map_response = {{"path", "auth-page"}, {"route", "/auth"}};
-    }
-    else if (r->path_ == "/header")
-    {
-        json_map_response = {{"path", "header-page"}, {"route", "/header"}};
-    }
-    else
-    {
-        Handle_404(r);
-        return;
-    }
-
-    r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
-}
-
 void Controller::GET_handler(webserver::http_request *r)
 {
 
-    std::cout << "GET Handler called" << std::endl;
+    std::string params;
+
+    if (r->params_.size() > 0)
+    {
+        params = DataService::mapToString(r->params_);
+    }
+
+    Socket s = *(r->s_);
+
+    std::map<std::string, std::string> json_map_response;
+
+    // --------------------------------------- //
+    // std::cout << "------------------------------------------" << std::endl;
+    //  && && extracted_json["id"].size() > 0 std::cout << "r->path_.find('db'): " << r->path_.find("db") << std::endl;
+
+    // std::cout << "r->path_.find('all') == std::string::npos : " << (r->path_.find("all") == std::string::npos) << std::endl;
+    // std::cout << "------------------------------------------" << std::endl;
+    // --------------------------------------- //
+
+    if (r->path_ == "/")
+    {
+        json_map_response = {{"path", "index"}, {"route", "/"}};
+    }
+    else if (r->path_ == "/get-json")
+    {
+        json_map_response = {{"status", "Success"}};
+    }
+    // Local database ops
+    else if (r->path_.find("db") != std::string::npos) // Big numbers eg. 48598349834, garbage
+    {
+        if (r->path_.find("all") != std::string::npos) // Return all objects
+        {
+            Store::animal_map all = Store::readItems();
+
+            if (all.size() != 0)
+            {
+                Store::animal_map::iterator it; // Iterator is a pointer to first element of the map
+
+                for (it = all.begin(); it != all.end(); it++)
+                {
+                    json_map_response.insert({std::to_string(it->first), it->second});
+                };
+            };
+
+            // json_map_response returned below
+        }
+        else if (r->path_.find("all") == std::string::npos && params.length() > 0 && r->params_["id"].length() > 0)
+        // Params found in GET requests
+        {
+            std::string id_string = r->params_["id"];
+            int id = std::stoi(id_string);
+
+            Store::animal_map res = Store::readItem(id);
+
+            if (res[id] != "")
+                json_map_response = {{id_string, res[id]}};
+        }
+        else
+        {
+            Handle_404(r);
+            return;
+        }
+    }
+    // Local database ops
+    else
+    {
+        Handle_404(r);
+        return;
+    }
+
+    Logger(r, json_map_response);
+    r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
+}
+
+void Controller::POST_handler(webserver::http_request *r)
+{
 
     Socket s = *(r->s_);
 
@@ -138,165 +159,91 @@ void Controller::GET_handler(webserver::http_request *r)
     {
         json_map_response = {{"path", "index"}, {"route", "/"}};
     }
-    else if (r->path_ == "/red")
-    {
-
-        json_map_response = {{"path", "red-page"}, {"route", "/red"}};
-    }
-    else if (r->path_ == "/blue")
-    {
-        json_map_response = {{"path", "blue-page"}, {"route", "/blue"}};
-    }
-    else if (r->path_ == "/form")
-    {
-        // title = "Fill a form";
-
-        // body = "<h1>Fill a form</h1>";
-        // body += "<form action='/form'>"
-        //         "<table>"
-        //         "<tr><td>Field 1</td><td><input name=field_1></td></tr>"
-        //         "<tr><td>Field 2</td><td><input name=field_2></td></tr>"
-        //         "<tr><td>Field 3</td><td><input name=field_3></td></tr>"
-        //         "</table>"
-        //         "<input type=submit></form>";
-
-        // for (std::map<std::string, std::string>::const_iterator i = r->params_.begin();
-        //      i != r->params_.end();
-        //      i++)
-        // {
-
-        //     body += "<br>" + i->first + " = " + i->second;
-        // }
-
-        // body += "<hr>" + links;
-
-        json_map_response = {{"path", "form-page"}, {"route", "/form"}};
-    }
-    else if (r->path_ == "/auth")
-    {
-        // if (r->authentication_given_)
-        // {
-        //     if (r->username_ == "rene" && r->password_ == "secretGarden")
-        //     {
-        //         body = "<h1>Successfully authenticated</h1>" + links;
-        //     }
-        //     else
-        //     {
-        //         body = "<h1>Wrong username or password</h1>" + links;
-        //         r->auth_realm_ = "Private Stuff";
-        //     }
-        // }
-        // else
-        // {
-        //     r->auth_realm_ = "Private Stuff";
-        // }
-
-        json_map_response = {{"path", "auth-page"}, {"route", "/auth"}};
-    }
-    else if (r->path_ == "/header")
-    {
-        json_map_response = {{"path", "header-page"}, {"route", "/header"}};
-    }
     else
     {
         Handle_404(r);
         return;
     }
 
+    Logger(r, json_map_response);
     r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
 }
 
 void Controller::PUT_handler(webserver::http_request *r)
 {
 
-    std::cout << "PUT Handler called" << std::endl;
-
     Socket s = *(r->s_);
 
-    std::string json_response;
+    json extracted_json;
+
+    if (r->raw_body_data_.length() > 0)
+        extracted_json = json::parse(r->raw_body_data_); // create JSON object from string literal
+
     std::map<std::string, std::string> json_map_response;
 
-    if (r->path_ == "/")
+    // --------------------------------------- //
+    std::cout << "------------------------------------------" << std::endl;
+
+    std::cout << "extracted_json : " << std::endl;
+    std::cout << extracted_json << std::endl;
+
+    std::cout
+        << "extracted_json['id'] extracted_json['item']: "
+        << extracted_json["id"]
+        << " "
+        << extracted_json["item"]
+        << std::endl;
+
+    std::cout
+        << "------------------------------------------" << std::endl;
+    // --------------------------------------- //
+
+    // Only allowing put requests to local database
+    // Putting to the database only needs extracted json
+    // Route allowed is only db
+    if (r->path_ == "/db")
     {
-        json_map_response = {{"path", "index"}, {"route", "/"}};
-    }
-    else if (r->path_ == "/red")
-    {
+        std::string id = extracted_json["id"];
+        std::string item = extracted_json["item"];
 
-        json_map_response = {{"path", "red-page"}, {"route", "/red"}};
-    }
-    else if (r->path_ == "/blue")
-    {
-        json_map_response = {{"path", "blue-page"}, {"route", "/blue"}};
-    }
-    else if (r->path_ == "/form")
-    {
-        // title = "Fill a form";
+        if (id.length() > 0 && item.length() > 0)
+        {
+            Store::addItem(std::stoi(id), item);
 
-        // body = "<h1>Fill a form</h1>";
-        // body += "<form action='/form'>"
-        //         "<table>"
-        //         "<tr><td>Field 1</td><td><input name=field_1></td></tr>"
-        //         "<tr><td>Field 2</td><td><input name=field_2></td></tr>"
-        //         "<tr><td>Field 3</td><td><input name=field_3></td></tr>"
-        //         "</table>"
-        //         "<input type=submit></form>";
+            // // DEBUGGING Get the entire map
+            // std::cout << "Full db :" << std::endl;
+            // Store::animal_map all = Store::readItems();
+            // json jmap(all);
+            // std::cout << jmap.dump(4) << std::endl;
+            // // DEBUGGING Get the entire map
 
-        // for (std::map<std::string, std::string>::const_iterator i = r->params_.begin();
-        //      i != r->params_.end();
-        //      i++)
-        // {
-
-        //     body += "<br>" + i->first + " = " + i->second;
-        // }
-
-        // body += "<hr>" + links;
-
-        json_map_response = {{"path", "form-page"}, {"route", "/form"}};
-    }
-    else if (r->path_ == "/auth")
-    {
-        // if (r->authentication_given_)
-        // {
-        //     if (r->username_ == "rene" && r->password_ == "secretGarden")
-        //     {
-        //         body = "<h1>Successfully authenticated</h1>" + links;
-        //     }
-        //     else
-        //     {
-        //         body = "<h1>Wrong username or password</h1>" + links;
-        //         r->auth_realm_ = "Private Stuff";
-        //     }
-        // }
-        // else
-        // {
-        //     r->auth_realm_ = "Private Stuff";
-        // }
-
-        json_map_response = {{"path", "auth-page"}, {"route", "/auth"}};
-    }
-    else if (r->path_ == "/header")
-    {
-        json_map_response = {{"path", "header-page"}, {"route", "/header"}};
+            json_map_response = {{"status", "success"}, {"id", id}};
+        }
+        else
+        {
+            // Default response
+            r->status_ = "401 Unauthorized";
+            json_map_response = {{"status", "Unauthorized"}};
+        }
     }
     else
     {
         Handle_404(r);
         return;
-    }
+    };
 
+    Logger(r, json_map_response);
     r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
 }
 
 void Controller::Handle_404(webserver::http_request *r)
 {
 
-    std::cout << "404 Handler called" << std::endl;
-
     std::map<std::string, std::string> json_map_response;
 
     r->status_ = "404 not found";
     json_map_response = {{"path", "404"}, {"status", "page non existent"}};
 
+    Logger(r, json_map_response);
     r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
 }

@@ -13,8 +13,11 @@ g++                         -c lib\base64\base64.cpp     -o compiled\base64.o
 
 g++                         -c lib\controllers\controllers.cpp     -o compiled\controllers.o
 g++                         -c lib\services\data\data.cpp     -o compiled\data.o
+g++                         -c lib\services\store\store.cpp     -o compiled\store.o
 
-g++ compiled\webserver.o compiled\base64.o compiled\main.o compiled\stdHelpers.o compiled\UrlHelper.o compiled\Socket.o compiled\controllers.o compiled\data.o -lwsock32 -o debug\WebServer.exe
+g++ compiled\webserver.o compiled\base64.o compiled\main.o compiled\stdHelpers.o compiled\UrlHelper.o compiled\Socket.o compiled\controllers.o compiled\data.o compiled\store.o -lwsock32 -o debug\WebServer.exe
 
 rmdir / Q / S compiled
+
+.\debug\Webserver.exe
 
