@@ -19,9 +19,10 @@ public:
 
     static int addItem(int, std::string);
     static animal_map readItem(int);
+    static animal_map readItems();
     static int modifyItem(int, std::string);
     static int removeItem(int);
-    static animal_map readItems();
+    static void removeEverything();
 
 private:
     static animal_map animals;

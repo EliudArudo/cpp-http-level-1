@@ -276,7 +276,7 @@ void Controller::DELETE_handler(webserver::http_request *r)
 
     std::map<std::string, std::string> json_map_response;
 
-    if (r->path_.find("db") != std::string::npos && params.length() > 0 && r->params_["id"].length() > 0)
+    if (r->path_.find("all") == std::string::npos && r->path_.find("db") != std::string::npos && params.length() > 2 && r->params_["id"].length() > 0)
     {
 
         std::string id_string = r->params_["id"];
@@ -291,6 +291,12 @@ void Controller::DELETE_handler(webserver::http_request *r)
             r->status_ = "500 Server Error";
             json_map_response = {{"status", "500 Server Error"}};
         }
+    }
+    else if (r->path_ == "/db/all" && params.length() == 0)
+    {
+        Store::removeEverything();
+
+        json_map_response = {{"status", "200 OK"}};
     }
     else
     {
@@ -308,7 +314,7 @@ void Controller::Handle_404(webserver::http_request *r)
     std::map<std::string, std::string> json_map_response;
 
     r->status_ = "404 Not Found";
-    json_map_response = {{"status", "404 Not Jound"}};
+    json_map_response = {{"status", "404 Not Found"}};
 
     Logger(r, json_map_response);
     r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data

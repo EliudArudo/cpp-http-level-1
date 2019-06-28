@@ -163,7 +163,6 @@ unsigned webserver::Request(void *ptr_s)
         break;
 
       line = line.substr(0, pos_cr_lf);
-      std::cout << " " << line << std::endl;
     }
     else
     {

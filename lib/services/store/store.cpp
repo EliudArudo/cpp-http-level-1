@@ -58,3 +58,8 @@ Store::animal_map Store::readItems()
 {
     return Store::animals;
 }
+
+void Store::removeEverything()
+{
+    Store::animals.clear();
+}
