@@ -60,17 +60,16 @@ unsigned webserver::Request(void *ptr_s)
     req.method_ = "GET";
   else if (line.find("POST") == 0)
     req.method_ = "POST";
-  else if (line.find("PUT") == 0) // Currently not yet supported
+  else if (line.find("PUT") == 0)
     req.method_ = "PUT";
   else if (line.find("PATCH") == 0) // Currently not yet supported
     req.method_ = "PATCH";
-  else if (line.find("DELETE") == 0) // Currently not yet supported
+  else if (line.find("DELETE") == 0)
     req.method_ = "DELETE";
 
   std::string path;
   std::map<std::string, std::string> params;
 
-  // size_t posStartPath = line.find_first_not_of(" ", 3);
   size_t posStartPath = line.find_first_not_of(" ", req.method_.length());
   SplitGetReq(line.substr(posStartPath), path, params);
 
@@ -78,6 +77,7 @@ unsigned webserver::Request(void *ptr_s)
   req.s_ = &s;
   req.path_ = path;
   req.params_ = params;
+  req.raw_body_data_ = "";
 
   static const std::string authorization = "Authorization: Basic ";
   static const std::string accept = "Accept: ";
@@ -151,7 +151,7 @@ unsigned webserver::Request(void *ptr_s)
 
       index++;
     }
-    else if (req.method_ == "GET")
+    else if (req.method_ == "GET" || req.method_ == "DELETE")
     {
       line = s.ReceiveLine(0);
 
@@ -163,10 +163,11 @@ unsigned webserver::Request(void *ptr_s)
         break;
 
       line = line.substr(0, pos_cr_lf);
+      std::cout << " " << line << std::endl;
     }
     else
     {
-      break; // PUT, PATCH, DELETE not yet supported
+      break;
     }
 
     // Rest of the original code
@@ -230,7 +231,7 @@ unsigned webserver::Request(void *ptr_s)
   //   s.SendLine(req.status_);
   // }
 
-  s.SendLine(req.status_); // CHANGE - REMOVE
+  s.SendLine(req.status_);
 
   s.SendLine(std::string("Date: ") + asctime_remove_nl + " GMT");
   s.SendLine(std::string("Server: ") + serverName);

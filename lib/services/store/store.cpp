@@ -20,7 +20,7 @@ int Store::modifyItem(int id, std::string animal)
     if (it == Store::animals.end())
         return 1;
 
-    Store::animals[id] = animal;
+    it->second = animal;
 
     return 0;
 }

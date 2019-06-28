@@ -10,5 +10,6 @@ public:
   void static POST_handler(webserver::http_request *);
   void static GET_handler(webserver::http_request *);
   void static PUT_handler(webserver::http_request *);
+  void static DELETE_handler(webserver::http_request *);
   void static Handle_404(webserver::http_request *);
 };

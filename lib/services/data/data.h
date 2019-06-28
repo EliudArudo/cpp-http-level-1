@@ -7,6 +7,8 @@ public:
     DataService();
 
     std::string static mapToString(std::map<std::string, std::string>);
+
+    std::string static mapToVectorString(std::map<int, std::string> &);
 };
 
 // create object from string literal
