@@ -125,7 +125,7 @@ void Controller::GET_handler(webserver::http_request *r)
             Store::animal_map res = Store::readItem(id);
 
             if (res[id] != "")
-                json_map_response = {{id_string, res[id]}};
+                json_map_response = {{"id", id_string}, {"item", res[id]}};
 
             // else, will send json_map_response {};
         }
