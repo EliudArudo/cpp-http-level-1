@@ -53,6 +53,50 @@ void Logger(webserver::http_request *r, std::map<std::string, std::string> json_
     cout
         << "----------------------------------------------" << endl;
 }
+
+void LoggerV2(webserver::http_request *r, std::map<std::string, std::string> json_map_response, std::string empty_array)
+{
+
+    /*  What we're logging
+    *  - Route
+    *  - Method
+    *  - Params
+    *  - Body data
+    *  - Expected response 
+    */
+
+    using namespace std; // Make our lives simpler from std::cout and std::endl
+
+    cout
+        << "----------------------------------------------" << endl;
+    cout << "Route: " << r->path_ << endl;
+    cout << "Method: " << r->method_ << endl;
+
+    string params = DataService::mapToString(r->params_);
+
+    if (params.length() > 2)
+    {
+        cout << "Route params: " << endl;
+        cout << params << endl;
+    }
+
+    if (r->raw_body_data_.length() > 0)
+    {
+        cout << "Body data: " << endl;
+
+        auto extracted_json = json::parse(r->raw_body_data_);
+        cout << extracted_json.dump(4) << endl;
+    }
+
+    cout << "What we're about to send out: " << endl;
+    if (empty_array.length() > 0)
+        cout << empty_array << endl;
+    else
+        cout << DataService::mapToString(json_map_response) << endl;
+
+    cout
+        << "----------------------------------------------" << endl;
+}
 /// Logger
 
 void Controller::Request_Handler(webserver::http_request *r)
@@ -85,6 +129,8 @@ void Controller::GET_handler(webserver::http_request *r)
     }
 
     std::map<std::string, std::string> json_map_response;
+    json empty_array;
+    bool empty_array_set = false;
 
     // --------------------------------------- //
     // std::cout << "------------------------------------------" << std::endl;
@@ -112,7 +158,12 @@ void Controller::GET_handler(webserver::http_request *r)
             if (all.size() != 0)
             {
                 json_map_response["items"] = DataService::mapToVectorString(all);
-            };
+            }
+            else
+            {
+                empty_array_set = true;
+                empty_array = json::array();
+            }
 
             // json_map_response returned below
         }
@@ -142,8 +193,16 @@ void Controller::GET_handler(webserver::http_request *r)
         return;
     }
 
-    Logger(r, json_map_response);
-    r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
+    if (empty_array_set)
+    {
+        LoggerV2(r, json_map_response, empty_array.dump());
+        r->answer_ = empty_array.dump();
+    }
+    else
+    {
+        Logger(r, json_map_response);
+        r->answer_ = DataService::mapToString(json_map_response); // Find out how to receive data
+    }
 }
 
 void Controller::POST_handler(webserver::http_request *r)
